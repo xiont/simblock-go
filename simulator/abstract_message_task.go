@@ -1,23 +1,29 @@
-package main
+package simulator
 
 // 检查接口方法
-var _ ITask = new(AbstractMessageTask)
+//var _ ITask = new(AbstractMessageTask)
 
 type IAbstractMessageTask interface {
 	ITask
 	GetFrom() *Node
 	GetTo() *Node
+	GetProtocol() string
 }
+
+// 检测抽象消息类是否实现了接口的方法
+// var _ IAbstractMessageTask = new(AbstractMessageTask)
 
 type AbstractMessageTask struct {
-	from *Node
-	to   *Node
+	from     *Node
+	to       *Node
+	protocol string
 }
 
-func NewAbstractMessageTask(from *Node, to *Node) *AbstractMessageTask {
+func NewAbstractMessageTask(from *Node, to *Node, protocol string) *AbstractMessageTask {
 	return &AbstractMessageTask{
-		from: from,
-		to:   to,
+		from:     from,
+		to:       to,
+		protocol: protocol,
 	}
 }
 
@@ -49,11 +55,4 @@ func (amt *AbstractMessageTask) GetInterval() int64 {
 	// Add 10 milliseconds here, why?  maybe some handle time
 	//TODO
 	return latency + 10
-}
-
-/**
- * Receive message at the <em>to</em> side.
- */
-func (amt *AbstractMessageTask) Run() {
-	amt.to.ReceiveMessage(amt)
 }

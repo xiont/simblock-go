@@ -4,13 +4,16 @@ package settings
  * The number of nodes participating in the blockchain network.
  */
 //TODO revert
-var NUM_OF_NODES int = 6000 //600;//800;//6000;
+var NUM_OF_NODES int = 10 //600;//800;//6000;
 // public static final int NUM_OF_NODES = 600;//600;//800;//6000;
 
 /**
  * The kind of routing table.
  */
 //public static final String TABLE = "simblock.node.routing.BitcoinCoreTable";
+var TABLE = "BitcoinCoreTable"
+
+var ALGO = "ProofOfWork"
 
 /**
  * The consensus algorithm to be used.
@@ -59,9 +62,16 @@ var STAKING_REWARD float64 = 0.01
  */
 //TODO revert
 //public static final int END_BLOCK_HEIGHT = 100;
-var END_BLOCK_HEIGHT int = 300
+var END_BLOCK_HEIGHT int = 10
 
 /**
  * Block size. (unit: byte).
  */
 var BLOCK_SIZE int64 = 535000 //6110;//8000;//535000;//0.5MB
+
+// protocol type
+const (
+	REC_MESSAGE   = "rec_message"
+	INV_MESSAGE   = "inv_message"
+	BLOCK_MESSAGE = "block_message"
+)

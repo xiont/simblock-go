@@ -1,4 +1,4 @@
-package main
+package simulator
 
 type ITask interface {
 	Run()

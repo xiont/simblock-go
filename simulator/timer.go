@@ -1,4 +1,4 @@
-package main
+package simulator
 
 import (
 	"fmt"
@@ -116,7 +116,7 @@ func RunTask() {
 func RemoveTask(task ITask) {
 	ScheduledTask, ok := Timer.taskMap.Get(task)
 	if ok {
-		Timer.taskQueue.Remove(ScheduledTask)
+		_, _ = Timer.taskQueue.Remove(ScheduledTask)
 		Timer.taskMap.Remove(task)
 	}
 }

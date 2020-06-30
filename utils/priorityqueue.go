@@ -64,18 +64,9 @@ func (p *PriorityQueue) UpdatePriority(x interface{}, newPriority int64) {
 }
 
 func (p *PriorityQueue) Remove(v interface{}) (interface{}, error) {
-	if len(*p.itemHeap) == 0 {
-		return nil, errors.New("empty queue")
-	}
-
-	index := p.itemHeap.Remove(v) //heap.Remove(p.itemHeap, v.(*item).index).(*item)
-	if index == -1 {
-		return nil, errors.New("no such item")
-	}
-
-	item := heap.Remove(p.itemHeap, index).(*item)
-	delete(p.lookup, item.value)
-	return item.value, nil
+	heap.Remove(p.itemHeap, p.lookup[v].index)
+	delete(p.lookup, v)
+	return v, nil
 }
 
 func (p *PriorityQueue) Peek() (interface{}, error) {

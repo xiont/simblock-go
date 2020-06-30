@@ -1,10 +1,13 @@
-package main
+package simulator
 
 import (
 	"container/list"
+	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/emirpasic/gods/sets/hashset"
 	"simblock-go/printfile"
 	"simblock-go/settings"
+	"simblock-go/utils"
+	"strconv"
 )
 
 type INode interface {
@@ -56,7 +59,7 @@ type Node struct {
 	/**
 	 * The current minting task
 	 */
-	mintingTask IAbstractMintingTask
+	mintingTask ITask
 
 	/**
 	 * In the process of sending blocks.
@@ -83,15 +86,14 @@ type Node struct {
  */
 func NewNode(nodeID int, numConnection int,
 	region int, miningPower int64,
-	routingTable IAbstractRoutingTable,
-	consensusAlgo IAbstractConsensusAlgo) *Node {
+) *Node {
 
-	node := Node{
-		nodeID:            nodeID,
-		region:            region,
-		miningPower:       miningPower,
-		routingTable:      routingTable,
-		consensusAlgo:     consensusAlgo,
+	node := &Node{
+		nodeID:      nodeID,
+		region:      region,
+		miningPower: miningPower,
+		//routingTable:      routingTable,
+		//consensusAlgo:     consensusAlgo,
 		block:             nil,
 		orphans:           hashset.New(),
 		mintingTask:       nil,
@@ -100,9 +102,15 @@ func NewNode(nodeID int, numConnection int,
 		downloadingBlocks: hashset.New(),
 		processingTime:    2,
 	}
+
+	// Using the reflect function to find the Initial TABLE and ALGO
+	r1, _ := utils.Call(*settings.FUNCS, settings.TABLE, node)
+	node.SetRoutingTable(r1[0].Interface().(IAbstractRoutingTable))
+	r2, _ := utils.Call(*settings.FUNCS, settings.ALGO, node)
+	node.SetConsensusAlgo(r2[0].Interface().(IAbstractConsensusAlgo))
 	node.setNumConnection(numConnection)
 
-	return &node
+	return node
 }
 
 /**
@@ -137,6 +145,19 @@ func (n *Node) GetMiningPower() int64 {
  *
  * @return the consensus algorithm. See {@link AbstractConsensusAlgo}
  */
+func (n *Node) SetConsensusAlgo(algo IAbstractConsensusAlgo) {
+	n.consensusAlgo = algo
+}
+
+/**
+ * Gets routing table.
+ *
+ * @return the routing table
+ */
+func (n *Node) SetRoutingTable(table IAbstractRoutingTable) {
+	n.routingTable = table
+}
+
 func (n *Node) getConsensusAlgo() IAbstractConsensusAlgo {
 	return n.consensusAlgo
 }
@@ -155,7 +176,7 @@ func (n *Node) getRoutingTable() IAbstractRoutingTable {
  *
  * @return the block
  */
-func (n *Node) getBlock() IBlock {
+func (n *Node) GetBlock() IBlock {
 	return n.block
 }
 
@@ -164,7 +185,7 @@ func (n *Node) getBlock() IBlock {
  *
  * @return the orphans
  */
-func (n *Node) getOrphans() *hashset.Set {
+func (n *Node) GetOrphans() *hashset.Set {
 	return n.orphans
 }
 
@@ -173,7 +194,7 @@ func (n *Node) getOrphans() *hashset.Set {
  *
  * @return the number of connection
  */
-func (n *Node) getNumConnection() int {
+func (n *Node) GetNumConnection() int {
 	return n.routingTable.GetNumConnection()
 }
 
@@ -191,7 +212,7 @@ func (n *Node) setNumConnection(numConnection int) {
  *
  * @return the neighbors
  */
-func (n *Node) getNeighbors() *list.List {
+func (n *Node) GetNeighbors() *arraylist.List {
 	return n.routingTable.GetNeighbors()
 }
 
@@ -218,16 +239,16 @@ func (n *Node) removeNeighbor(node *Node) bool {
 /**
  * Initializes the routing table.
  */
-func (n *Node) joinNetWork() {
+func (n *Node) JoinNetWork() {
 	n.routingTable.InitTable()
 }
 
 /**
  * Mint the genesis block.
  */
-func (n *Node) genesisBlock() {
-	genisis := n.consensusAlgo.GenesisBlock()
-	n.receiveBlock(genisis)
+func (n *Node) GenesisBlock() {
+	genesis := n.consensusAlgo.GenesisBlock()
+	n.receiveBlock(genesis)
 }
 
 /**
@@ -258,14 +279,15 @@ func (n *Node) addToChain(newBlock IBlock) {
  */
 // TODO
 func (n *Node) printAddBlock(newBlock IBlock) {
-	printfile.OUT_JSON_FILE.Write("{")
-	printfile.OUT_JSON_FILE.Write("\"kind\":\"add-block\",")
-	printfile.OUT_JSON_FILE.Write("\"content\":{")
-	printfile.OUT_JSON_FILE.Write("\"timestamp\":" + string(GetCurrentTime()) + ",")
-	printfile.OUT_JSON_FILE.Write("\"node-id\":" + string(n.GetNodeID()) + ",")
-	printfile.OUT_JSON_FILE.Write("\"block-id\":" + string(newBlock.GetId()))
-	printfile.OUT_JSON_FILE.Write("}")
-	printfile.OUT_JSON_FILE.Write("},")
+	printfile.OUT_JSON_FILE.Print("{")
+	printfile.OUT_JSON_FILE.Print("\"kind\":\"add-block\",")
+	printfile.OUT_JSON_FILE.Print("\"content\":{")
+	printfile.OUT_JSON_FILE.Print("\"timestamp\":" + strconv.FormatInt(GetCurrentTime(), 10) + ",")
+	printfile.OUT_JSON_FILE.Print("\"node-id\":" + strconv.Itoa(n.GetNodeID()) + ",")
+	printfile.OUT_JSON_FILE.Print("\"block-id\":" + strconv.Itoa(newBlock.GetId()))
+	printfile.OUT_JSON_FILE.Print("}")
+	printfile.OUT_JSON_FILE.Print("},")
+	printfile.OUT_JSON_FILE.Flush()
 	//OUT_JSON_FILE.flush()
 }
 
@@ -308,8 +330,16 @@ func (n *Node) minting() {
  */
 func (n *Node) sendInv(block IBlock) {
 	//发送给所有邻居节点
-	for to := n.routingTable.GetNeighbors().Front(); to != nil; to = to.Next() {
-		invMessageTask := NewInvMessageTask(n, to.Value.(*Node), block)
+	//for _,to := range n.routingTable.GetNeighbors() {
+	//	invMessageTask := NewInvMessageTask(n, to, block)
+	//	// Timer.putTask
+	//	PutTask(invMessageTask)
+	//
+
+	it := n.routingTable.GetNeighbors().Iterator()
+	for it.Next() {
+		_, value := it.Index(), it.Value()
+		invMessageTask := NewInvMessageTask(n, value.(*Node), block)
 		// Timer.putTask
 		PutTask(invMessageTask)
 	}
@@ -336,7 +366,6 @@ func (n *Node) receiveBlock(block IBlock) {
 		// Generates a new minting task
 		// 新建挖矿任务
 		n.minting()
-
 		// Advertise received block
 		// 广播给其他节点区块的到达
 		// 此处可以优化一点点（不要再发给我了）
