@@ -1,6 +1,7 @@
 
-![SimBlock-Go](https://gitee.com/weefweq/simblock-go/raw/master/docs/images/logo.jpg) 
-
+![SimBlock-Go](https://gitee.com/weefweq/simblock-go/raw/master/docs/images/logo.gif) 
+![Hex.pm](https://img.shields.io/hexpm/l/plug)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/gohugoio/hugo?color=green)
 ## What is SimBlock?
 
 _SimBlock_ is an open source blockchain network simulator, developed by Distributed Systems Group, Tokyo Institute of Technology.
