@@ -1,4 +1,5 @@
 
+![SimBlock-Go](https://gitee.com/weefweq/simblock-go/raw/master/docs/images/logo.jpg) 
 
 ## What is SimBlock?
 
